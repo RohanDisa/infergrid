@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Ruff
+        run: |
+          ruff check gateway mock-backend bench model_prep clients edge scripts
+          ruff format --check gateway mock-backend bench model_prep clients edge scripts
+      - name: Mypy
+        run: mypy
+      - name: Pytest
+        run: pytest -q
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - name: Helm lint and template
+        run: |
+          for chart in charts/gateway charts/mock-backend charts/vllm charts/triton-trtllm charts/autoscaling; do
+            helm lint "$chart"
+            helm template "ci-$(basename "$chart")" "$chart" --namespace infergrid >/dev/null
+          done
+      - name: kubeconform
+        run: |
+          curl -sSL -o /tmp/kubeconform.tgz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tgz -C /tmp
+          for chart in charts/gateway charts/mock-backend charts/vllm charts/triton-trtllm; do
+            helm template "ci-$(basename "$chart")" "$chart" --namespace infergrid \
+              --set serviceMonitor.enabled=false \
+              | /tmp/kubeconform -strict -ignore-missing-schemas
+          done
+
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: gateway
+          push: false
+          tags: infergrid/gateway:ci
+      - name: Build mock-backend
+        uses: docker/build-push-action@v6
+        with:
+          context: mock-backend
+          push: false
+          tags: infergrid/mock-backend:ci

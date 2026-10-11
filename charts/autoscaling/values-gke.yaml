@@ -1,0 +1,9 @@
+targets:
+  - name: vllm-fp16
+    scaleTargetRef: vllm-fp16
+    deployment: vllm-fp16
+    threshold: "8"
+  - name: triton-fp8
+    scaleTargetRef: triton-fp8
+    deployment: triton-fp8
+    threshold: "8"

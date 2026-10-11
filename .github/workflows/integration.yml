@@ -1,0 +1,44 @@
+name: integration
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  kind-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build images
+        run: |
+          docker build -t infergrid/gateway:dev gateway
+          docker build -t infergrid/mock-backend:dev mock-backend
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: infergrid
+          config: infra/local/kind.yaml
+          wait: 120s
+      - name: Load images
+        run: |
+          kind load docker-image infergrid/gateway:dev --name infergrid
+          kind load docker-image infergrid/mock-backend:dev --name infergrid
+      - name: Install charts
+        run: |
+          kubectl create namespace infergrid
+          helm upgrade --install mock-backend charts/mock-backend --namespace infergrid
+          helm upgrade --install gateway charts/gateway --namespace infergrid \
+            -f charts/gateway/values-local.yaml \
+            --set serviceMonitor.enabled=false
+          kubectl -n infergrid rollout status deploy/mock-backend --timeout=180s
+          kubectl -n infergrid rollout status deploy/gateway --timeout=180s
+      - name: Smoke test
+        run: |
+          kubectl -n infergrid port-forward svc/gateway 8080:8080 &
+          sleep 3
+          INFERGRID_URL=http://127.0.0.1:8080 bash scripts/smoke.sh

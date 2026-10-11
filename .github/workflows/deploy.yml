@@ -1,0 +1,31 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Backend + precision to deploy
+        type: choice
+        options:
+          - vllm-fp16
+          - vllm-awq
+          - vllm-fp8
+          - triton-fp16
+          - triton-fp8
+        default: vllm-fp16
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Guard
+        run: |
+          echo "Phase 9: wire Workload Identity Federation, then helm upgrade --install for ${{ inputs.config }}."
+          echo "This workflow is a no-op until GCP secrets are set."
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
+            exit 0
+          fi

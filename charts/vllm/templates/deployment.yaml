@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vllm.fullname" . }}
+  labels:
+    {{- include "vllm.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "vllm.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "vllm.labels" . | nindent 8 }}
+    spec:
+      {{- if .Values.gpu.enabled }}
+      nodeSelector:
+        {{- toYaml .Values.gpu.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.gpu.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.gcs.enabled .Values.gcs.uri }}
+      initContainers:
+        - name: sync-weights
+          image: {{ .Values.gcs.syncImage }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              if [ -f /models/.synced ]; then
+                echo "weight cache hit"
+                exit 0
+              fi
+              echo "syncing {{ .Values.gcs.uri }} -> /models"
+              gcloud storage rsync --recursive "{{ .Values.gcs.uri }}" /models
+              touch /models/.synced
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      {{- end }}
+      containers:
+        - name: vllm
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --model={{ .Values.model.path }}
+            - --served-model-name={{ .Values.servedModelName }}
+            - --max-model-len={{ .Values.model.maxModelLen }}
+            - --gpu-memory-utilization={{ .Values.model.gpuMemoryUtilization }}
+            - --max-num-seqs={{ .Values.model.maxNumSeqs }}
+            - --port={{ .Values.service.port }}
+            {{- if .Values.model.quantization }}
+            - --quantization={{ .Values.model.quantization }}
+            {{- end }}
+            {{- range .Values.model.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          {{- if .Values.hfTokenSecret.name }}
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hfTokenSecret.name }}
+                  key: {{ .Values.hfTokenSecret.key }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.startupProbe.path }}
+              port: http
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: http
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: http
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+              {{- if .Values.gpu.enabled }}
+              {{ .Values.gpu.resource }}: {{ .Values.gpu.count }}
+              {{- end }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+              {{- if .Values.gpu.enabled }}
+              {{ .Values.gpu.resource }}: {{ .Values.gpu.count }}
+              {{- end }}
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm
+            {{- if .Values.persistence.enabled }}
+            - name: models
+              mountPath: /models
+            {{- end }}
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shm.sizeLimit }}
+        {{- if .Values.persistence.enabled }}
+        - name: models
+          persistentVolumeClaim:
+            claimName: {{ include "vllm.fullname" . }}-models
+        {{- end }}

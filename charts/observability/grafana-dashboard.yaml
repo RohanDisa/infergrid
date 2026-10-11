@@ -1,0 +1,5 @@
+# Applied by infra/local/up.sh from dashboards/infergrid.json.
+# Do not helm-template this file; it is not a chart.
+#   kubectl -n monitoring create configmap infergrid-grafana-dashboard \
+#     --from-file=infergrid.json=dashboards/infergrid.json \
+#     --dry-run=client -o yaml | kubectl label --local -f - grafana_dashboard=1 -o yaml | kubectl apply -f -

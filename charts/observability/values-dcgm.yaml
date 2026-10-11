@@ -1,0 +1,13 @@
+# NVIDIA DCGM exporter overlay. Install from:
+# helm repo add gpu-helm-charts https://nvidia.github.io/dcgm-exporter/helm-charts
+serviceMonitor:
+  enabled: true
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Equal
+    value: present
+    effect: NoSchedule
+
+nodeSelector:
+  cloud.google.com/gke-accelerator: nvidia-l4

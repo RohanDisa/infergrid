@@ -1,0 +1,57 @@
+replicaCount: 1
+
+image:
+  repository: infergrid/gateway
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  nodePort: 30080
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+probes:
+  liveness:
+    path: /healthz
+    periodSeconds: 15
+  readiness:
+    path: /readyz
+    periodSeconds: 5
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+
+routes: |
+  routes:
+    - name: llama-8b-vllm-fp16
+      backend: vllm
+      url: http://vllm-fp16:8000
+      upstream_model: llama-8b
+      openai_compatible: true
+      deployment: vllm-fp16
+    - name: llama-8b-trtllm-fp8
+      backend: triton
+      url: http://triton-fp8:8000
+      upstream_model: llama-8b
+      openai_compatible: true
+      deployment: triton-fp8
+  aliases:
+    - name: llama-8b
+      weighted:
+        - route: llama-8b-vllm-fp16
+          weight: 50
+        - route: llama-8b-trtllm-fp8
+          weight: 50
+
+env:
+  INFERGRID_ROUTES_PATH: /etc/infergrid/routes.yaml
+  INFERGRID_RELOAD_INTERVAL_SECONDS: "5"

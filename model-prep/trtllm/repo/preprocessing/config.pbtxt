@@ -1,0 +1,13 @@
+name: "preprocessing"
+backend: "python"
+max_batch_size: ${TRITON_MAX_BATCH_SIZE}
+input [
+  { name: "query" data_type: TYPE_STRING dims: [ 1 ] }
+]
+output [
+  { name: "input_ids" data_type: TYPE_INT32 dims: [ -1 ] }
+]
+parameters: {
+  key: "tokenizer_dir"
+  value: { string_value: "${TOKENIZER_DIR}" }
+}

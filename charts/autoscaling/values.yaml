@@ -1,0 +1,19 @@
+prometheus:
+  serverAddress: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+
+defaults:
+  minReplicaCount: 1
+  maxReplicaCount: 2
+  pollingInterval: 15
+  cooldownPeriod: 300
+  threshold: "2"
+  queryMetric: llm_queue_depth
+
+targets:
+  - name: mock-backend
+    scaleTargetRef: mock-backend
+    deployment: mock-backend
+    minReplicaCount: 1
+    maxReplicaCount: 2
+    threshold: "2"
+    query: sum(vllm:num_requests_waiting)

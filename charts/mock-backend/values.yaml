@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: infergrid/mock-backend
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+env:
+  MOCK_MODEL_NAME: mock-qwen
+  MOCK_CAPACITY: "1"
+  MOCK_TOKEN_DELAY_MS: "80"
+  MOCK_DEFAULT_TOKENS: "16"
+  MOCK_KV_CACHE_USAGE: "0.35"
+  MOCK_DEPLOYMENT: mock-backend
+
+serviceMonitor:
+  enabled: true
+  interval: 15s

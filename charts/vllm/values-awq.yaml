@@ -1,0 +1,5 @@
+servedModelName: llama-8b-vllm-awq
+model:
+  path: /models/llama-3.1-8b-instruct-awq
+  quantization: awq
+fullnameOverride: vllm-awq

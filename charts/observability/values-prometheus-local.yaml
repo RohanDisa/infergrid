@@ -1,0 +1,62 @@
+# Slim kube-prometheus-stack overlay for Kind. Do not use on GKE as-is.
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: true
+  adminPassword: infergrid
+  service:
+    type: NodePort
+    nodePort: 30030
+  persistence:
+    enabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+    datasources:
+      enabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 24h
+    scrapeInterval: 15s
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    additionalScrapeConfigs: []
+  service:
+    type: NodePort
+    nodePort: 30090
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+coreDns:
+  enabled: true
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: true
+nodeExporter:
+  enabled: true
+kubeStateMetrics:
+  enabled: true

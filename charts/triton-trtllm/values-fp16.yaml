@@ -1,0 +1,3 @@
+fullnameOverride: triton-fp16
+servedModelName: llama-8b-trtllm-fp16
+precision: fp16

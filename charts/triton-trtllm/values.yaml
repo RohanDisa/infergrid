@@ -1,0 +1,76 @@
+replicaCount: 1
+fullnameOverride: ""
+
+image:
+  repository: nvcr.io/nvidia/tritonserver
+  tag: 26.07-trtllm-python-py3
+  pullPolicy: IfNotPresent
+
+modelRepository: /models/repo
+servedModelName: llama-8b-trtllm-fp16
+precision: fp16
+
+gcs:
+  enabled: true
+  uri: ""
+  syncImage: gcr.io/google.com/cloudsdktool/google-cloud-cli:535.0.0-slim
+
+persistence:
+  enabled: true
+  storageClass: standard-rwo
+  size: 100Gi
+  accessModes:
+    - ReadWriteOnce
+
+service:
+  type: ClusterIP
+  httpPort: 8000
+  grpcPort: 8001
+  metricsPort: 8002
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+
+gpu:
+  enabled: true
+  resource: nvidia.com/gpu
+  count: 1
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-l4
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Equal
+      value: present
+      effect: NoSchedule
+
+startupProbe:
+  path: /v2/health/ready
+  periodSeconds: 10
+  failureThreshold: 30
+readinessProbe:
+  path: /v2/health/ready
+  periodSeconds: 5
+livenessProbe:
+  path: /v2/health/live
+  periodSeconds: 15
+  failureThreshold: 3
+
+args:
+  - tritonserver
+  - --model-repository=/models/repo
+  - --http-port=8000
+  - --grpc-port=8001
+  - --metrics-port=8002
+  - --allow-openai=true
+
+resources:
+  requests:
+    cpu: "2"
+    memory: 8Gi
+  limits:
+    cpu: "7"
+    memory: 28Gi
+
+shm:
+  sizeLimit: 4Gi

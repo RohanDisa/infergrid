@@ -1,0 +1,77 @@
+replicaCount: 1
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: vllm/vllm-openai
+  tag: v0.31.0
+  pullPolicy: IfNotPresent
+
+servedModelName: llama-8b
+model:
+  path: /models/llama-3.1-8b-instruct
+  quantization: ""
+  maxModelLen: 4096
+  gpuMemoryUtilization: 0.90
+  maxNumSeqs: 64
+  extraArgs: []
+
+gcs:
+  enabled: true
+  uri: ""
+  syncImage: gcr.io/google.com/cloudsdktool/google-cloud-cli:535.0.0-slim
+
+persistence:
+  enabled: true
+  storageClass: standard-rwo
+  size: 100Gi
+  accessModes:
+    - ReadWriteOnce
+
+shm:
+  sizeLimit: 4Gi
+
+service:
+  type: ClusterIP
+  port: 8000
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+
+gpu:
+  enabled: true
+  resource: nvidia.com/gpu
+  count: 1
+  nodeSelector:
+    cloud.google.com/gke-accelerator: nvidia-l4
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Equal
+      value: present
+      effect: NoSchedule
+
+hfTokenSecret:
+  name: ""
+  key: HF_TOKEN
+
+startupProbe:
+  path: /health
+  periodSeconds: 10
+  failureThreshold: 60
+readinessProbe:
+  path: /health
+  periodSeconds: 5
+livenessProbe:
+  path: /health
+  periodSeconds: 15
+  failureThreshold: 3
+
+resources:
+  requests:
+    cpu: "2"
+    memory: 8Gi
+  limits:
+    cpu: "7"
+    memory: 28Gi

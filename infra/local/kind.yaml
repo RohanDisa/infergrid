@@ -1,0 +1,11 @@
+# Optional. A 3-node Kind cluster plus Prometheus pinned this laptop.
+# One control-plane node is enough to exercise charts later.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: infergrid
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 18080
+        protocol: TCP

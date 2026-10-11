@@ -1,0 +1,28 @@
+# Host-network routes for `make dev` (no Kubernetes).
+routes:
+  - name: llama-8b-vllm-fp16
+    backend: mock
+    url: http://127.0.0.1:8000
+    upstream_model: mock-qwen
+    openai_compatible: true
+    deployment: mock-backend
+  - name: llama-8b-trtllm-fp8
+    backend: mock
+    url: http://127.0.0.1:8000
+    upstream_model: mock-qwen
+    openai_compatible: true
+    deployment: mock-backend
+  - name: mock-qwen
+    backend: mock
+    url: http://127.0.0.1:8000
+    upstream_model: mock-qwen
+    openai_compatible: true
+    deployment: mock-backend
+
+aliases:
+  - name: llama-8b
+    weighted:
+      - route: llama-8b-vllm-fp16
+        weight: 50
+      - route: llama-8b-trtllm-fp8
+        weight: 50

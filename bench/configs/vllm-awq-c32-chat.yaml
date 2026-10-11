@@ -1,0 +1,13 @@
+name: vllm-awq-c32-chat
+backend: vllm
+precision: awq-int4
+model: llama-8b-vllm-awq
+concurrency: 32
+input_tokens: 512
+output_tokens: 256
+workload: chat
+warmup_requests: 30
+requests: 300
+repeats: 3
+max_model_len: 4096
+client: aiperf

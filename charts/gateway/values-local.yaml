@@ -1,0 +1,36 @@
+service:
+  type: NodePort
+  nodePort: 30080
+
+image:
+  repository: infergrid/gateway
+  tag: dev
+  pullPolicy: IfNotPresent
+
+routes: |
+  routes:
+    - name: llama-8b-vllm-fp16
+      backend: mock
+      url: http://mock-backend:8000
+      upstream_model: mock-qwen
+      openai_compatible: true
+      deployment: mock-backend
+    - name: llama-8b-trtllm-fp8
+      backend: mock
+      url: http://mock-backend:8000
+      upstream_model: mock-qwen
+      openai_compatible: true
+      deployment: mock-backend
+    - name: mock-qwen
+      backend: mock
+      url: http://mock-backend:8000
+      upstream_model: mock-qwen
+      openai_compatible: true
+      deployment: mock-backend
+  aliases:
+    - name: llama-8b
+      weighted:
+        - route: llama-8b-vllm-fp16
+          weight: 50
+        - route: llama-8b-trtllm-fp8
+          weight: 50

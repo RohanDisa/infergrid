@@ -1,0 +1,13 @@
+name: triton-fp8-c32-chat
+backend: triton
+precision: fp8
+model: llama-8b-trtllm-fp8
+concurrency: 32
+input_tokens: 512
+output_tokens: 256
+workload: chat
+warmup_requests: 30
+requests: 300
+repeats: 3
+max_model_len: 4096
+client: aiperf

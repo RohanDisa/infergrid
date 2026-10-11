@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Secrets and credentials
+*.pem
+*.key
+credentials.json
+service-account*.json
+hf_token
+.hf_token
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Kubernetes / Helm
+charts/**/charts/
+charts/**/*.tgz
+*.kubeconfig
+
+# Benchmark artifacts (keep schema, ignore raw dumps)
+bench/results/*.json
+!bench/results/.gitkeep
+bench/results/*.csv
+
+# Model weights (never commit)
+**/*.safetensors
+**/*.bin
+**/*.gguf
+**/*.engine
+model-prep/artifacts/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+
+# Local kind
+infra/local/.kind-loaded

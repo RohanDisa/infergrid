@@ -1,0 +1,13 @@
+name: vllm-fp16-c32-rag
+backend: vllm
+precision: fp16
+model: llama-8b-vllm-fp16
+concurrency: 32
+input_tokens: 2048
+output_tokens: 128
+workload: rag
+warmup_requests: 30
+requests: 300
+repeats: 3
+max_model_len: 4096
+client: aiperf

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mock-backend
+description: CPU-only OpenAI-compatible mock used for Kind and CI
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

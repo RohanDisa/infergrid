@@ -1,0 +1,28 @@
+{{- range .Values.targets }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .name }}
+  labels:
+    app.kubernetes.io/name: infergrid-autoscaling
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+spec:
+  scaleTargetRef:
+    name: {{ .scaleTargetRef }}
+  minReplicaCount: {{ .minReplicaCount | default $.Values.defaults.minReplicaCount }}
+  maxReplicaCount: {{ .maxReplicaCount | default $.Values.defaults.maxReplicaCount }}
+  pollingInterval: {{ $.Values.defaults.pollingInterval }}
+  cooldownPeriod: {{ $.Values.defaults.cooldownPeriod }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: {{ $.Values.prometheus.serverAddress | quote }}
+        query: {{ .query | default (printf "sum(%s{deployment=\"%s\"})" $.Values.defaults.queryMetric .deployment) | quote }}
+        threshold: {{ .threshold | default $.Values.defaults.threshold | quote }}
+{{- end }}

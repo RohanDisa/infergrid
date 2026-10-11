@@ -1,0 +1,5 @@
+servedModelName: llama-8b-vllm-fp16
+model:
+  path: /models/llama-3.1-8b-instruct
+  quantization: ""
+fullnameOverride: vllm-fp16

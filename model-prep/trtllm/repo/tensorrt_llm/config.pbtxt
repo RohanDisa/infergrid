@@ -1,0 +1,33 @@
+name: "tensorrt_llm"
+backend: "tensorrtllm"
+max_batch_size: ${TRITON_MAX_BATCH_SIZE}
+input [
+  { name: "input_ids" data_type: TYPE_INT32 dims: [ -1 ] },
+  { name: "request_output_len" data_type: TYPE_INT32 dims: [ 1 ] }
+]
+output [
+  { name: "output_ids" data_type: TYPE_INT32 dims: [ -1 ] }
+]
+instance_group [
+  { count: 1 kind: KIND_GPU }
+]
+parameters: {
+  key: "gpt_model_path"
+  value: { string_value: "${ENGINE_DIR}" }
+}
+parameters: {
+  key: "batching_strategy"
+  value: { string_value: "inflight_fused_batching" }
+}
+parameters: {
+  key: "decoupled_mode"
+  value: { string_value: "${DECOUPLED_MODE}" }
+}
+parameters: {
+  key: "kv_cache_free_gpu_mem_fraction"
+  value: { string_value: "${KV_CACHE_FREE_GPU_MEM_FRACTION}" }
+}
+parameters: {
+  key: "max_tokens_in_paged_kv_cache"
+  value: { string_value: "${MAX_TOKENS_IN_PAGED_KV_CACHE}" }
+}

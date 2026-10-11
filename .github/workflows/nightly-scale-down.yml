@@ -1,0 +1,31 @@
+name: nightly-scale-down
+
+on:
+  schedule:
+    - cron: "0 7 * * *" # 00:00 America/Los_Angeles-ish; adjust after you pick a region
+  workflow_dispatch:
+
+jobs:
+  scale-gpu-to-zero:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - name: Scale GPU pool to 0
+        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+        env:
+          PROJECT: ${{ secrets.GCP_PROJECT }}
+          ZONE: ${{ secrets.GKE_ZONE }}
+          CLUSTER: infergrid
+        run: bash infra/gke/down.sh
+      - name: Skip when GCP is not wired
+        if: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER == '' }}
+        run: echo "Workload Identity Federation is not configured yet. Phase 9."

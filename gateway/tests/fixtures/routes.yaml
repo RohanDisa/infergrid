@@ -1,0 +1,27 @@
+routes:
+  - name: llama-8b-vllm-fp16
+    backend: vllm
+    url: http://vllm-fp16:8000
+    upstream_model: llama-8b
+    openai_compatible: true
+    deployment: vllm-fp16
+  - name: llama-8b-trtllm-fp8
+    backend: triton
+    url: http://triton-fp8:8000
+    upstream_model: llama-8b
+    openai_compatible: true
+    deployment: triton-fp8
+  - name: llama-8b-trtllm-legacy
+    backend: triton
+    url: http://triton-legacy:8000
+    upstream_model: ensemble
+    openai_compatible: false
+    deployment: triton-legacy
+
+aliases:
+  - name: llama-8b
+    weighted:
+      - route: llama-8b-vllm-fp16
+        weight: 50
+      - route: llama-8b-trtllm-fp8
+        weight: 50
