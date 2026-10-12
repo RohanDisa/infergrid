@@ -64,7 +64,7 @@ python -m bench.make_table
 
 Reports cover time to first token, inter-token latency, output throughput, KV-cache capacity, accuracy, and estimated cost per million tokens. 
 
-## Development
+## Testing and CI
 
 ```bash
 pytest -q
